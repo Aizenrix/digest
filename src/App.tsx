@@ -54,7 +54,7 @@ export function App() {
         <a className="brand" href={import.meta.env.BASE_URL}>Радар технологий</a>
         <a className="edition" href={import.meta.env.BASE_URL + 'angular/'}>Версия на Angular</a>
       </div></header>
-      <main id="feed" className="wrap main">
+      <main id="feed" className="wrap main" tabIndex={-1}>
         <div className="masthead">
           <h1>Дайджест новостей</h1>
           <p>Разработка и технологии. Короткие пересказы со ссылками на источники.</p>

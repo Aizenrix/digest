@@ -17,7 +17,7 @@ import '../shared/styles.css'
       <a class="brand" href="./">Радар технологий</a>
       <a class="edition" href="../">Версия на React</a>
     </div></header>
-    <main id="feed" class="wrap main">
+    <main id="feed" class="wrap main" tabindex="-1">
       <div class="masthead"><h1>Дайджест новостей</h1><p>Разработка и технологии. Короткие пересказы со ссылками на источники.</p></div>
       @if (digest.isLoading()) {
         <p class="notice" role="status">Загрузка дайджеста…</p>
