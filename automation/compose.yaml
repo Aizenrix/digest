@@ -1,0 +1,30 @@
+name: digest-module4
+
+services:
+  n8n:
+    image: n8nio/n8n:2.45.4
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5684:5678"
+    environment:
+      GENERIC_TIMEZONE: Europe/Moscow
+      TZ: Europe/Moscow
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      N8N_RUNNERS_ENABLED: "false"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_LOG_LEVEL: warn
+      DIGEST_URL: ${DIGEST_URL}
+      DIGEST_KEY: ${DIGEST_KEY}
+      DIGEST_TAGS: ${DIGEST_TAGS:-}
+      DIGEST_PER_SOURCE: ${DIGEST_PER_SOURCE:-5}
+      DIGEST_SITE: ${DIGEST_SITE:-https://aizenrix.github.io/digest/}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:4b-instruct}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:

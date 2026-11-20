@@ -1,0 +1,150 @@
+{
+  "id": "DigestEvening001",
+  "name": "Дайджест: вечером в Telegram",
+  "nodes": [
+    {
+      "id": "eace5c22-fcbf-5d87-b862-4cede8ef78f5",
+      "name": "Каждый вечер",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 19,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "5d1eb473-e63f-57b3-8d19-1425d9bfb5da",
+      "name": "Запустить вручную",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        190
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "ae89421b-17bd-5f9c-a7b2-a0754bd2c633",
+      "name": "Дайджест",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $env.DIGEST_URL }}",
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "63bcb60d-3e59-5dd2-8327-55bcb068450b",
+      "name": "Текст сообщения",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const response = $input.first().json\nif (!Array.isArray(response.news)) throw new Error('Хранилище не вернуло список новостей')\nconst tags = ($env.DIGEST_TAGS || '').split(',').map(tag => tag.trim()).filter(Boolean)\nconst since = Date.now() - 86400000\nconst news = response.news.filter(item => {\n  const itemTags = Array.isArray(item.tags) ? item.tags : String(item.tags ?? '').split(',').map(tag => tag.trim())\n  return Date.parse(item.date) >= since && /^https?:\\/\\//i.test(item.link || '')\n    && (!tags.length || itemTags.some(tag => tags.includes(tag)))\n}).sort((a, b) => Date.parse(b.date) - Date.parse(a.date))\nif (!news.length) return []\nconst today = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'long', timeZone: 'Europe/Moscow' }).format(new Date())\nconst url = $env.DIGEST_SITE\nlet text = 'Дайджест за ' + today + '\\nНовостей: ' + news.length + '\\n'\nlet shown = 0\nfor (const item of news) {\n  const line = '\\n• ' + item.title + ' (' + item.source + ')\\n' + item.link + '\\n'\n  if (text.length + line.length > 3650) break\n  text += line\n  shown++\n}\nif (shown < news.length) text += '\\nЕщё на сайте: ' + (news.length - shown)\ntext += '\\n\\nЧитать дайджест: ' + url\nreturn [{ json: { text } }]"
+      }
+    },
+    {
+      "id": "422ffb44-cb39-5cdc-8eb3-8ae86fff7e23",
+      "name": "Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_web_page_preview": true
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "DigestTelegram01",
+          "name": "Telegram — дайджест"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Каждый вечер": {
+      "main": [
+        [
+          {
+            "node": "Дайджест",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Запустить вручную": {
+      "main": [
+        [
+          {
+            "node": "Дайджест",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Дайджест": {
+      "main": [
+        [
+          {
+            "node": "Текст сообщения",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Текст сообщения": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Moscow",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "none"
+  }
+}
